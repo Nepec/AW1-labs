@@ -1,19 +1,26 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
-import TaskList from './TaskComponents';
-import FilterList from './FilterComponents';
-import MainNav from './MainNav'
+import dayjs from 'dayjs'
 
-import PlusCircleFill from 'react-bootstrap-icons/dist/icons/plus-circle-fill';
-
+/* Ract Components */
+import React, { useState } from 'react';
 import Container from 'react-bootstrap/Container';
 import Col from 'react-bootstrap/Col';
 import Collapse from 'react-bootstrap/Collapse';
 
-import React, {useState} from 'react';
+/* Icons */
+import PlusCircleFill from 'react-bootstrap-icons/dist/icons/plus-circle-fill';
 
-import {filters, tl} from './data';
+/* Custom components */
+import TaskList from './TaskComponents';
+import FilterList from './FilterComponents';
+import MainNav from './MainNav'
+import AddTaskModal from './AddTaskModal'
+import { useViewport } from './utils'
+
+/* Data */
+import { filters, tl } from './data';
 
 function App() {
   const [open, setOpen] = useState(true);
@@ -53,27 +60,37 @@ function Aside(props) {
 }
 
 function Main(props) {
+  const [tasks, setTasks] = useState(tl);
+  const [showModal, setShowModal] = useState(false);
+
+  const addTask = (tsk) => {
+      setTasks(oldTasks => [...oldTasks, tsk]);
+  }
+
   return (
-    <Col as="main" lg={8} className="py-3"><h1>{filters[props.activeFilter - 1].text}</h1>
-      <TaskList tl={tl} activeFilter={props.activeFilter}/>
-      <Container fluid className="fixed-bottom d-flex justify-content-between px-4 mb-4">
-        <div />
-        <PlusCircleFill color="#17a2b8" size={64} />
-      </Container>
-    </Col>
+    <>
+      <Col as="main" lg={8} className="py-3">
+        <h1>{filters[props.activeFilter - 1].text}</h1>
+        <TaskList 
+          tl={tasks} 
+          deleteTask={(tskToDelete) => setTasks(tskToDelete)} 
+          activeFilter={props.activeFilter}
+        />
+        <Container fluid className="fixed-bottom d-flex justify-content-between px-4 mb-4">
+          <div />
+          <PlusCircleFill 
+            onClick={() => setShowModal(true)} color="#17a2b8" size={64}
+          />
+        </Container>
+      </Col>
+      <AddTaskModal 
+        show={showModal}
+        onHide={() => setShowModal(false)}
+        addTask={(tsk) => addTask(tsk)}
+        tasks={tasks}
+      />
+    </>
   );
-}
-
-const useViewport = () => {
-  const [width, setWidth] = useState(window.innerWidth);
-
-  React.useEffect( () => {
-    const handleWindowResize = () => setWidth(window.innerWidth);
-    window.addEventListener("resize", handleWindowResize);
-    return () => window.removeEventListener("resize", handleWindowResize);
-  }, [] );
-
-  return { width };
 }
 
 export default App;
