@@ -5,7 +5,9 @@ import Main from './Main';
 import FilterList from './FilterComponents';
 import MainNav from './MainNav'
 
-import {Container, Col, Collapse} from 'react-bootstrap';
+import { Container, Col, Collapse } from 'react-bootstrap';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 
 import React, {useState} from 'react';
 
@@ -15,7 +17,18 @@ function App() {
   return (
     <Container fluid className="d-flex flex-column height-100 m-0 p-0">
       <MainNav toggleCollapse={isOpen => setOpen(isOpen)} />
-      <Content isOpen={open} />
+      <Router>
+        <Switch>
+          <Route exact path="/">
+            <Redirect to="/All" />
+          </Route>
+          <Route 
+            path="/"
+            render={({ location }) => (<Content isOpen={open} url={location} />)}
+          />
+        </Switch>
+      </Router>
+      
     </Container>
   );
 }
@@ -28,10 +41,12 @@ function Content(props) {
 
   const lg = (width > breakpoint);
 
+  console.log(props.url);
+  console.log(typeof props.url);
   return(
     <Container fluid className="d-flex flex-lg-grow-1 flex-wrap m-0 p-0">
       <Aside lg={lg} chooseFilter={(filterID) => setChosenFilter(filterID)} isOpen={props.isOpen} />
-      <Main lg={lg} activeFilter={chosenFilter} />
+      <Main lg={lg} activeFilter={chosenFilter} url={props.url} />
     </Container>
   );
 }
