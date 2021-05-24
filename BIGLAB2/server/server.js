@@ -14,28 +14,18 @@ app.use(express.json());
 /******** API ********/
 
 // GET /api/tasks
-app.get(
-  "/api/tasks",
-  async (req, res) => {
-
-
-    //TOGLIERE setTimeout
-
-
-    setTimeout( async () => {
-      try {
-        const tasks = await dao.listTasks();
-        res
-          .status(200)
-          .json({ status: "success", details: "api GET /tasks", content: tasks });
-      } catch {
-        res
-          .status(500)
-          .json({ status: "failure", details: `Database Error ${err}` });
-      }
-    }, 2000);    
+app.get("/api/tasks", async (req, res) => {
+  try {
+    const tasks = await dao.listTasks();
+    res
+      .status(200)
+      .json({ status: "success", details: "api GET /tasks", content: tasks });
+  } catch {
+    res
+      .status(500)
+      .json({ status: "failure", details: `Database Error ${err}` });
   }
-);
+});
 
 // GET /api/tasks/:id
 app.get(
@@ -118,7 +108,7 @@ app.post(
       .then((id) =>
         res.status(200).json({
           status: "success",
-          details: `api POST /tasks with id: ${id}`,
+          details: { msg: `api POST /tasks with id: ${id}`, id: id },
         })
       )
       .catch((err) =>

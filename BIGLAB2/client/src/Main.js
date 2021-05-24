@@ -24,7 +24,7 @@ function Main(props) {
   const [update, setUpdate] = useState(true);
   const [loading, setLoading] = useState(true);
 
-  useEffect( () => {
+  useEffect(() => {
     async function loading() {
       const data = await API.loadData();
       setTasks(data);
@@ -32,10 +32,8 @@ function Main(props) {
       setLoading(false);
     }
 
-    if(update)
-     loading();
-
-  }, [update] );
+    if (update) loading();
+  }, [update]);
 
   const [editMode, setEditMode] = useState(-1);
 
@@ -50,16 +48,14 @@ function Main(props) {
   const deleteTask = tskID => {
     setTasks(oldTasks => {
       return oldTasks.map(tsk => {
-        if (tsk.id === tskID)
-          return {...tsk, status: 'deleting'};
-        else
-          return tsk;
+        if (tsk.id === tskID) return { ...tsk, status: 'deleting' };
+        else return tsk;
       });
     });
 
     async function deleting(id) {
       const response = await API.deleteData(id);
-      if(response.status === 'success') setUpdate(true);
+      if (response.status === 'success') setUpdate(true);
     }
     deleting(tskID);
   };
@@ -100,11 +96,37 @@ function Main(props) {
     event.preventDefault();
     let id;
 
+    async function inserting(task) {
+      const response = await API.insertData(task);
+      if (response.status === 'success') setUpdate(true);
+      return response.details.id;
+    }
+    async function editing(tsk) {
+      API.editData(tsk)
+        .then(response => {
+          if (response.status === 'success') setUpdate(true);
+        })
+        .catch(err => console.log(`Network Error ${err}`));
+    }
+
     if (description.isValid && date.isValid) {
-      if (editMode >= 0) {
-        id = editMode;
-        deleteTask(id);
-      } else id = tasks.sort((a, b) => a.id - b.id)[tasks.length - 1].id + 1;
+      /* id = editMode;
+
+        let taskToEdit = tasks.find(tsk => tsk.id === id);
+        let taskDate;
+        if (!date.value) taskDate = '';
+        else if (date.value && !time)
+          taskDate = dayjs.tz(`${date.value}T00:00:00.000Z`);
+        else taskDate = dayjs.tz(`${date.value}T${time}:00.000Z`);
+        taskToEdit.description = description.value;
+        taskToEdit.date = taskDate;
+        taskToEdit.isPrivate = !!isPrivate;
+        taskToEdit.isUrgent = !!isImportant;
+        taskToEdit.completed = false;
+
+        console.log(jsonMapperInverse(taskToEdit));
+        editing(jsonMapperInverse(taskToEdit)); */
+      /* id = tasks.sort((a, b) => a.id - b.id)[tasks.length - 1].id + 1; */
 
       let taskDate;
 
@@ -114,23 +136,31 @@ function Main(props) {
       else taskDate = dayjs.tz(`${date.value}T${time}:00.000Z`);
 
       const task = {
-        id: id,
+        /* id: id, */
         description: description.value,
         isPrivate: isPrivate,
         isUrgent: isImportant,
         date: taskDate,
-        completed: 0  
+        completed: 0,
       };
+      console.log(task.date);
 
-      task.status = "loading";
-      setTasks( oldTasks => [...oldTasks.filter(task => task.id != id), task]);
+      if (editMode >= 0) {
+        task.id = editMode;
+        task.status = 'info';
+        editing(jsonMapperInverse(task));
+      } else {
+        task.status = 'loading';
+        console.log(editMode);
 
-      async function inserting(task){
-        const response = await API.insertData(task);
-        if(response.status === 'success')
-         setUpdate(true);
+        const newID = inserting(jsonMapperInverse(task));
+        task.id = newID;
+        setTasks(oldTasks => [
+          ...oldTasks.filter(task => task.id !== id),
+          task,
+        ]);
+        console.log(task);
       }
-      inserting(jsonMapperInverse(task));
 
       handleClose();
       clearForm();
@@ -196,16 +226,13 @@ function Main(props) {
     filter => filterToUrl(filter.text) === props.activeFilter
   );
 
-  return (
-    loading ? 
-    (
-      <Col as="main" lg={8} className="py-5 text-center">
-        <ArrowRepeat size={32} className="loading-animation mr-3" />
-        <span >Loading data from database server</span>
-      </Col>
-    )
-    :
-    (<Col as="main" lg={8} className="py-3">
+  return loading ? (
+    <Col as="main" lg={8} className="py-5 text-center">
+      <ArrowRepeat size={32} className="loading-animation mr-3" />
+      <span>Loading data from database server</span>
+    </Col>
+  ) : (
+    <Col as="main" lg={8} className="py-3">
       <h1>{filterName[0] ? filterName[0].text : ''}</h1>
       <TaskList
         tasks={tasks}
@@ -225,7 +252,7 @@ function Main(props) {
           {...formProps}
         />
       </Container>
-    </Col>)
+    </Col>
   );
 }
 

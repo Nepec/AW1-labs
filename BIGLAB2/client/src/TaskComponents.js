@@ -9,7 +9,7 @@ import {
   ThreeDotsVertical,
   Trash2Fill,
   PencilSquare,
-  ArrowRepeat
+  ArrowRepeat,
 } from 'react-bootstrap-icons';
 
 import React, { useState } from 'react';
@@ -28,20 +28,27 @@ function Task(props) {
   return props.editMode === task.id ? (
     <TaskForm {...propsObj} tskID={task.id} />
   ) : (
-    <ListGroup.Item className={"d-flex align-items-center " + task.status} >
+    <ListGroup.Item className={'d-flex align-items-center ' + task.status}>
       <Col
         as="span"
         className={task.isUrgent && 'text-danger font-weight-bold'}
       >
-        {task.status ?
-        <span><ArrowRepeat size={16} className={"loading-animation text-black mr-2"} />{task.description}</span>
-        :
-        <Form.Check
-          custom
-          type="checkbox"
-          id={'custom-checkbox-' + task.id}
-          label={task.description}
-        />}
+        {task.status ? (
+          <span>
+            <ArrowRepeat
+              size={16}
+              className={'loading-animation text-black mr-2'}
+            />
+            {task.description}
+          </span>
+        ) : (
+          <Form.Check
+            custom
+            type="checkbox"
+            id={'custom-checkbox-' + task.id}
+            label={task.description}
+          />
+        )}
       </Col>
       <Col as="span" className="text-dark text-center">
         {task.isPrivate && <PersonFill size={20} />}
@@ -83,6 +90,7 @@ function TaskList(props) {
 
 function TaskControls(props) {
   const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
     <a
       href=""
       ref={ref}
