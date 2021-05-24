@@ -23,6 +23,7 @@ dayjs.extend(isToday);
 
 function Task(props) {
   const { task, deleteTask, ...propsObj } = props;
+  const isPrivate = task.private == 0 ? false : true;
 
   return props.editMode === task.id ? (
     <TaskForm {...propsObj} tskID={task.id} />
@@ -30,7 +31,7 @@ function Task(props) {
     <ListGroup.Item className="d-flex align-items-center">
       <Col
         as="span"
-        className={task.isUrgent && 'text-danger font-weight-bold'}
+        className={task.important && 'text-danger font-weight-bold'}
       >
         <Form.Check
           custom
@@ -40,14 +41,15 @@ function Task(props) {
         />
       </Col>
       <Col as="span" className="text-dark text-center">
-        {task.isPrivate && <PersonFill size={20} />}
+        {isPrivate && <PersonFill size={20} />}
       </Col>
       <Col
         as="span"
         className="font-075 text-right d-flex justify-content-end align-items-center"
       >
         <span>
-          {task.date && task.date.format('dddd D MMMM YYYY [at] H:mm')}
+          {task.deadline &&
+            dayjs(task.deadline).format('dddd D MMMM YYYY [at] H:mm')}
         </span>
         <TaskControls
           taskID={task.id}
@@ -60,19 +62,15 @@ function Task(props) {
 }
 
 function TaskList(props) {
-  const { tasks, activeFilter, ...propsObj } = props;
+  const { tasks, ...propsObj } = props;
 
-  let newList = applyFilter(activeFilter, tasks);
-
-  if (newList === undefined) return <Redirect to="/all" />;
-
-  const taskList = newList.map(task => (
-    <Task key={task.id} task={task} {...propsObj} />
-  ));
+  if (tasks === undefined) return <Redirect to="/all" />;
 
   return (
     <ListGroup variant="flush" className="margin-b-75">
-      {taskList}
+      {tasks.map(task => (
+        <Task key={task.id} task={task} {...propsObj} />
+      ))}
     </ListGroup>
   );
 }

@@ -2,21 +2,24 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
-import { filters, tl } from './data';
+import { filters } from './data';
 import { filterToUrl } from './utils';
 import { TaskAdder } from './AdderComponents';
 import TaskList from './TaskComponents';
 
 import { Col, Container } from 'react-bootstrap';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
+const API = '/api/tasks/';
+
 function Main(props) {
-  const [tasks, setTasks] = useState([...tl]);
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState(undefined);
   const [editMode, setEditMode] = useState(-1);
 
   const [show, setShow] = useState(false);
@@ -39,15 +42,12 @@ function Main(props) {
         value: currentTask.description,
         isValid: checkDescValidity(currentTask.description),
       });
-
       setIsPrivate(currentTask.isPrivate);
       setIsImportant(currentTask.isUrgent);
-
       setDate({
         value: currentTask.date ? currentTask.date.format('YYYY-MM-DD') : '',
         isValid: checkDateValidity(currentTask.date, tskID),
       });
-
       setTime(currentTask.date ? currentTask.date.format('HH:mm') : '');
     } else clearForm();
 
@@ -81,14 +81,13 @@ function Main(props) {
       else taskDate = dayjs.tz(`${date.value}T${time}:00.000Z`);
 
       const task = {
-        id: id,
         description: description.value,
-        isPrivate: isPrivate,
-        isUrgent: isImportant,
-        date: taskDate,
+        private: isPrivate,
+        important: isImportant,
+        deadline: taskDate,
       };
 
-      setTasks(tsks => [...tsks, task].sort((a, b) => a.id - b.id));
+      setNewTask(task);
       handleClose();
       clearForm();
 
@@ -153,15 +152,39 @@ function Main(props) {
     filter => filterToUrl(filter.text) === props.activeFilter
   );
 
+  useEffect(() => {
+    async function fetchTasks() {
+      fetch(API + props.activeFilter)
+        .then(response => {
+          if (!response.ok) throw Error(response.statusText);
+          /* let type = response.headers.get('Content-Type');
+          if (type !== 'application/json')
+            throw new TypeError(`Expected JSON, got ${type}`); */
+          return response.json();
+        })
+        .then(data => setTasks(data.content))
+        .catch(err => console.log(err));
+    }
+
+    fetchTasks();
+  }, [props.activeFilter, newTask]);
+
+  useEffect(() => {
+    async function addNewTask(nt) {
+      fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nt),
+      }).catch(err => console.log(`Failed to store data on server: ${err}`));
+    }
+    newTask && addNewTask(newTask);
+    setNewTask(undefined);
+  }, [newTask]);
+
   return (
     <Col as="main" lg={8} className="py-3">
       <h1>{filterName[0] ? filterName[0].text : ''}</h1>
-      <TaskList
-        tasks={tasks}
-        deleteTask={deleteTask}
-        activeFilter={props.activeFilter}
-        {...formProps}
-      />
+      <TaskList tasks={tasks} deleteTask={deleteTask} {...formProps} />
       <Container
         fluid
         className="fixed-bottom d-flex flex-row-reverse px-4 mb-4"

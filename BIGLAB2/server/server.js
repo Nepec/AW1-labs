@@ -14,27 +14,23 @@ app.use(express.json());
 /******** API ********/
 
 // GET /api/tasks
-app.get(
-  "/api/tasks",
-  [param("id").isInt({ min: 0, max: 100 })],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ err: errors.array() });
-    }
-
-    try {
-      const tasks = await dao.listTasks();
-      res
-        .status(200)
-        .json({ status: "success", details: "api GET /tasks", content: tasks });
-    } catch {
-      res
-        .status(500)
-        .json({ status: "failure", details: `Database Error ${err}` });
-    }
+app.get("/api/tasks", async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ err: errors.array() });
   }
-);
+
+  try {
+    const tasks = await dao.listTasks();
+    res
+      .status(200)
+      .json({ status: "success", details: "api GET /tasks", content: tasks });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ status: "failure", details: `Database Error ${err}` });
+  }
+});
 
 // GET /api/tasks/:id
 app.get(
@@ -54,7 +50,7 @@ app.get(
         details: "api GET /tasks/:id",
         content: task,
       });
-    } catch {
+    } catch (err) {
       res
         .status(500)
         .json({ status: "failure", details: `Database Error ${err}` });
@@ -62,10 +58,10 @@ app.get(
   }
 );
 
-// GET /api/tasks:filter
+// GET /api/tasks/:filter
 app.get(
   "/api/tasks/:filter",
-  [param("id").isInt({ min: 0, max: 100 })],
+  [param("filter").isLength({ min: 0, max: 100 })],
   async (req, res) => {
     const filter = req.params.filter;
     const errors = validationResult(req);
@@ -80,7 +76,7 @@ app.get(
         details: `api GET /tasks/${filter}`,
         content: tasks,
       });
-    } catch {
+    } catch (err) {
       res
         .status(500)
         .json({ status: "failure", details: `Database Error ${err}` });
